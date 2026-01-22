@@ -1,15 +1,13 @@
-// Konfigurasi Peta
 const map = new maplibregl.Map({
     container: 'map',
     style: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
-    center: [112.7856, -7.3116], // Koordinat Rungkut (sesuaikan sedikit jika perlu)
+    center: [112.7856, -7.3116], // Koordinat Rungkut 
     zoom: 13,
-    pitch: 0 // Kita pakai 2D dulu biar analisisnya jelas terlihat
+    pitch: 0 
 });
 
 map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-// --- KONFIGURASI KATEGORI (BERDASARKAN SKOR) ---
 const suitabilityCategories = [
     { 
         label: 'Tampilkan Semua', 
@@ -20,33 +18,30 @@ const suitabilityCategories = [
     { 
         label: 'Sangat Ideal (Skor 7-9)', 
         value: 'sangat', 
-        color: '#1a9850', // Hijau Tua (sesuai paint map)
+        color: '#1a9850', 
         description: 'Area <strong>Sangat Ideal</strong>. Skor 7-9.' 
     },
     { 
         label: 'Cukup Ideal (Skor 4-6)', 
         value: 'cukup', 
-        color: '#fee08b', // Kuning/Oranye
+        color: '#fee08b', 
         description: 'Area <strong>Cukup Ideal</strong>. Skor 4-6.' 
     },
     { 
         label: 'Kurang Ideal (Skor 1-3)', 
         value: 'kurang', 
-        color: '#d73027', // Merah
+        color: '#d73027',
         description: 'Area <strong>Kurang Ideal</strong>. Skor 1-3.' 
     }
 ];
 
-// Initialize UI
 const legendContainer = document.getElementById('legend');
 const descriptionBox = document.getElementById('description-box');
 
-// --- GENERATE LEGEND UI ---
 suitabilityCategories.forEach((category, index) => {
     const item = document.createElement('div');
     item.className = `legend-item ${index === 0 ? 'active' : ''}`;
     
-    // Saat item diklik, panggil fungsi filter
     item.onclick = () => filterMap(category, item);
 
     const colorBox = document.createElement('span');
@@ -62,22 +57,18 @@ suitabilityCategories.forEach((category, index) => {
     legendContainer.appendChild(item);
 });
 
-// --- FUNGSI FILTER UTAMA ---
+
 function filterMap(category, element) {
-    // 1. Update UI
     document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('active'));
     element.classList.add('active');
     descriptionBox.innerHTML = category.description;
-
-    // 2. Siapkan Logika Filter (SKALA 1-9)
     let filterLogic = null;
-    
-    // Pakai to-number biar aman kalau data aslinya string
     const scoreGet = ['to-number', ['get', 'score']]; 
 
     if (category.value === 'all') {
         filterLogic = null; 
     } else if (category.value === 'sangat') {
+        
         // Skor >= 7 (Berarti 7, 8, 9)
         filterLogic = ['>=', scoreGet, 7];
     } else if (category.value === 'cukup') {
@@ -91,8 +82,7 @@ function filterMap(category, element) {
         filterLogic = ['<', scoreGet, 4];
     }
 
-    // 3. TERAPKAN FILTER KE LAYER YANG BENAR
-    // Nama layer harus sama persis dengan 'id' di map.addLayer
+
     const targetLayer = 'layer-kesesuaian'; 
 
     if (map.getLayer(targetLayer)) {
@@ -109,7 +99,6 @@ map.on('load', () => {
         'data': 'data/hasil_analisis.geojson'
     });
 
-    // Layer ID disamakan dengan fungsi filter di atas
     map.addLayer({
         'id': 'layer-kesesuaian', 
         'type': 'fill',
@@ -118,7 +107,7 @@ map.on('load', () => {
             'fill-color': [
                 'interpolate',
                 ['linear'],
-                ['to-number', ['get', 'score']], // Pastikan dibaca angka
+                ['to-number', ['get', 'score']], 
                 3, '#d73027', 
                 6, '#fee08b', 
                 9, '#1a9850'    
@@ -128,15 +117,13 @@ map.on('load', () => {
         }
     });
 
-    // Klik Popup (Logika 1-9)
     map.on('click', 'layer-kesesuaian', (e) => {
         const rawScore = e.features[0].properties.score;
-        const score = Number(rawScore); // Konversi ke angka JS
+        const score = Number(rawScore);
         
         let keterangan = "Kurang Ideal";
         let warnaStatus = "red";
 
-        // Logic 1-9
         if (score >= 7) {
             warnaStatus = "green";
         } else if (score >= 4) {
@@ -156,7 +143,6 @@ map.on('load', () => {
             .addTo(map);
     });
 
-    // Hover effect
     map.on('mouseenter', 'layer-kesesuaian', () => map.getCanvas().style.cursor = 'pointer');
     map.on('mouseleave', 'layer-kesesuaian', () => map.getCanvas().style.cursor = '');
 });
