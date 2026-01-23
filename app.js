@@ -1,7 +1,27 @@
 const map = new maplibregl.Map({
     container: 'map',
-    style: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
-    center: [112.7856, -7.3116], // Koordinat Rungkut 
+    // Ganti URL style sebelumnya dengan Objek Style ini:
+    style: {
+        'version': 8,
+        'sources': {
+            'esri-satellite': {
+                'type': 'raster',
+                'tiles': [
+                    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                ],
+                'tileSize': 256
+            }
+        },
+        'layers': [
+            {
+                'id': 'background',
+                'type': 'raster',
+                'source': 'esri-satellite',
+                'paint': {}
+            }
+        ]
+    },
+    center: [112.7856, -7.3116], 
     zoom: 13,
     pitch: 0
 });
@@ -127,6 +147,11 @@ map.on('load', () => {
         data: 'data/sekolah_rungkut.geojson'
     });
 
+    map.addSource('batas-rungkut', {
+        'type': 'geojson',
+        'data': 'data/kecamatan_rungkut.geojson' 
+    });
+
     map.addLayer({
         'id': 'layer-kesesuaian',
         'type': 'fill',
@@ -185,6 +210,20 @@ map.on('load', () => {
             'circle-color': '#33a02c',
             'circle-stroke-color': '#000000',
             'circle-stroke-width': 1.5
+        }
+    });
+
+    map.addLayer({
+        'id': 'batas-rungkut-layer',
+        'type': 'line',
+        'source': 'batas-rungkut',
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-color': '#FF0000', 
+            'line-width': 3          
         }
     });
 
